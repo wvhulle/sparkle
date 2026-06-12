@@ -118,6 +118,21 @@ lake build                                # ~5 min first time
 lake env lean --run Examples/Counter.lean # smoke-test
 ```
 
+### Development environment (Nix)
+
+A `flake.nix` pins the full toolchain — `elan`/`lake`, a C/C++ compiler (the
+JIT compiles generated C++ at runtime), `verilator`, `iverilog`, `yosys`, the
+RISC-V cross-toolchains, the Python stack, and the kernel build prerequisites:
+
+```bash
+nix develop          # drops you into the pinned shell, then `lake build`
+```
+
+Reproducibility boundary: `flake.lock` pins everything from nixpkgs. Lean
+itself is fetched at runtime — `elan` resolves the `lean-toolchain` pin
+(`v4.28.0`) and `lake` fetches the deps in `lake-manifest.json`. So the
+environment is reproducible *by pin*, not a hermetic nix build.
+
 A minimal register chain:
 
 ```lean
