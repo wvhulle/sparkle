@@ -1,4 +1,5 @@
 import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.Tactic
 import Sparkle.Analog.Model
 
@@ -51,6 +52,31 @@ theorem diodeCurrent_strictMono (Is Vt : ℝ) (hIs : 0 < Is) (hVt : 0 < Vt) :
   have hexp : Real.exp (a / Vt) < Real.exp (b / Vt) := Real.exp_lt_exp.mpr hdiv
   simp only [diodeCurrent_real]
   nlinarith [hexp, hIs]
+
+/-- **Formal derivative.** The diode is differentiable in the applied voltage,
+with derivative `(Is/Vt)·exp(v/Vt)` — its small-signal conductance. Proved by the
+chain rule (`Mathlib.Analysis.Calculus`), not by hand: this is the actual calculus
+machinery, the thing a `Float` simulator has no access to. -/
+theorem diodeCurrent_hasDerivAt (Is Vt v : ℝ) :
+    HasDerivAt (diodeCurrent Is Vt) (Is / Vt * Real.exp (v / Vt)) v := by
+  have hmul : HasDerivAt (fun v : ℝ => Is * (Real.exp (v / Vt) - 1))
+      (Is * (Real.exp (v / Vt) * (1 / Vt))) v :=
+    (((hasDerivAt_id v).div_const Vt).exp.sub_const 1).const_mul Is
+  have hfun : diodeCurrent Is Vt = fun v : ℝ => Is * (Real.exp (v / Vt) - 1) := by
+    funext x; exact diodeCurrent_real Is Vt x
+  rw [hfun]
+  convert hmul using 1
+  ring
+
+/-- **Positive conductance.** The small-signal conductance `di/dv` is strictly
+positive for `Is, Vt > 0`. This is what guarantees each diode contributes a
+positive-definite term to the MNA Jacobian, keeping the Newton solve
+well-conditioned — a solver-correctness fact derived from the device model. -/
+theorem diodeCurrent_conductance_pos (Is Vt v : ℝ) (hIs : 0 < Is) (hVt : 0 < Vt) :
+    0 < deriv (diodeCurrent Is Vt) v := by
+  rw [(diodeCurrent_hasDerivAt Is Vt v).deriv]
+  have := Real.exp_pos (v / Vt)
+  positivity
 
 /-- Passivity, forward: a positive applied voltage drives a positive current. -/
 theorem diodeCurrent_forward_pos (Is Vt : ℝ) (hIs : 0 < Is) (hVt : 0 < Vt)

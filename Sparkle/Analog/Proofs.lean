@@ -1,4 +1,5 @@
 import Sparkle.Analog.Proofs.Diode
+import Sparkle.Analog.Proofs.RC
 
 /-!
 # Sparkle.Analog.Proofs — verified analog model properties
