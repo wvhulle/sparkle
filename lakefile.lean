@@ -113,6 +113,12 @@ lean_lib «Tools.SVParser» where
 lean_lib «Sparkle.Analog» where
   roots := #[`Sparkle.Analog]
 
+-- Verification of analog device models. This is the ONLY analog library that
+-- depends on Mathlib; the simulator above never imports it, so the sim/WASM
+-- build stays Mathlib-free.
+lean_lib «Sparkle.Analog.Proofs» where
+  roots := #[`Sparkle.Analog.Proofs]
+
 -- Phase-1 exit criterion: RC/RLC transient vs closed-form.
 lean_exe «analog-transient-test» where
   root := `Tests.Analog.TransientTest
