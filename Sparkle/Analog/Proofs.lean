@@ -1,3 +1,5 @@
+import Sparkle.Analog.Proofs.Dimension
+
 /-!
 # Sparkle.Analog.Proofs — verified analog model properties
 
