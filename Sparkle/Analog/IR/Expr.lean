@@ -108,9 +108,17 @@ structure Equation where
   rhs : AExpr
   deriving Repr, Inhabited
 
+/-- Build an `Equation` from two operands of some carrier. The class lets the `≡`
+notation serve both untyped `AExpr` laws and dimension-typed `DimExpr` laws (whose
+instance lives in `Sparkle.Analog.DimExpr`), erasing to the same `Equation`. -/
+class Equate (α : Type) where
+  equate : α → α → Equation
+
+instance : Equate AExpr := ⟨Equation.mk⟩
+
 /-- `v ≡ R * i` builds the `Equation` relating branch voltage and current. Binds
 looser than arithmetic so the operands parse as whole expressions. -/
-scoped infix:50 " ≡ " => Equation.mk
+scoped infix:50 " ≡ " => Equate.equate
 
 /-- Normal form `lhs - rhs = 0`, the residual the Newton solver drives to zero. -/
 def Equation.residual (eq : Equation) : AExpr := .sub eq.lhs eq.rhs

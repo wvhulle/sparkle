@@ -19,9 +19,9 @@ namespace Examples.Analog.Ladder
 
 /-- An `n`-stage RC ladder driven by a 5 V source: each stage is a series
 resistor followed by a shunt capacitor to ground. The output is the last node. -/
-def ladder (n : Nat) (R C : Float) : Circuit := runCircuit do
+def ladder (n : Nat) (R : Ohm) (C : Farad) : Circuit := runCircuit do
   let src ← net
-  place (vsourceDC 5.0) src ground
+  place (vsourceDC (volts 5.0)) src ground
   let mut prev := src
   for _ in [0:n] do
     let node ← net
@@ -32,7 +32,7 @@ def ladder (n : Nat) (R C : Float) : Circuit := runCircuit do
 def demo : IO Unit := do
   IO.println "Parametric RC ladder (one Lean loop, no generate blocks):"
   for stages in [1, 3, 5] do
-    let c := ladder stages 1e3 1e-6
+    let c := ladder stages (ohms 1e3) (farads 1e-6)
     -- At DC every node settles to the source (caps block DC, no steady current).
     let vOut := (c.transient 1e-5 4000).finalNet c stages
     IO.println s!"  {stages} stages → {c.netCount} nets, last node at 40ms = {vOut} V"

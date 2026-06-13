@@ -1,5 +1,5 @@
 import Sparkle.Analog.IR.Netlist
-import Sparkle.Analog.Model
+import Sparkle.Analog.DimExpr
 
 /-!
 # Authoring DSL
@@ -86,32 +86,35 @@ def runCircuit (m : CircuitM Unit) : Circuit :=
 
 /-! ## Primitive electrical devices
 
-Each is one acausal equation; together they exercise the resistive, reactive,
-source and nonlinear cases the solver must handle. -/
+Each is one acausal equation, with dimension-typed parameters and a
+dimension-checked law (via `twoPinV`): the branch voltage is `Volt`-typed and the
+current `Ampere`-typed, so a unit error inside the equation is a compile error. -/
 
 /-- Resistor: `v = R·i`. -/
-def resistor (R : Float) : TwoPin .electrical := twoPin fun v i => [v ≡ R * i]
+def resistor (R : Ohm) : TwoPin .electrical := twoPinV fun v i => [v ≡ R * i]
 
 /-- Capacitor: `i = C·dv/dt`. -/
-def capacitor (C : Float) : TwoPin .electrical := twoPin fun v i => [i ≡ C * ddt v]
+def capacitor (C : Farad) : TwoPin .electrical := twoPinV fun v i => [i ≡ C * v.ddt]
 
 /-- Inductor: `v = L·di/dt` (naturally acausal — current-controlled). -/
-def inductor (L : Float) : TwoPin .electrical := twoPin fun v i => [v ≡ L * ddt i]
-
-/-- Independent voltage source with a time-dependent waveform: `v = e(time)`.
-The branch current is left free (an MNA unknown). -/
-def vsource (e : AExpr → AExpr) : TwoPin .electrical := twoPin fun v _i => [v ≡ e .time]
+def inductor (L : Henry) : TwoPin .electrical := twoPinV fun v i => [v ≡ L * i.ddt]
 
 /-- Constant (DC) voltage source: `v = V`. -/
-def vsourceDC (V : Float) : TwoPin .electrical := twoPin fun v _i => [v ≡ (V : AExpr)]
+def vsourceDC (V : Volt) : TwoPin .electrical :=
+  twoPinV fun v _i => [v ≡ (V : DimExpr Dim.voltage)]
 
 /-- Independent current source: `i = I`. -/
-def isourceDC (I : Float) : TwoPin .electrical := twoPin fun _v i => [i ≡ (I : AExpr)]
+def isourceDC (I : Ampere) : TwoPin .electrical :=
+  twoPinV fun _v i => [i ≡ (I : DimExpr Dim.current)]
 
-/-- Shockley diode: `i = Is·(exp(v/Vt) − 1)`. The current law is the polymorphic
-`diodeCurrent` (instantiated here at `AExpr`), the same definition the proofs
-library verifies over `ℝ`. -/
-def diode (Is Vt : Float) : TwoPin .electrical :=
-  twoPin fun v i => [i ≡ diodeCurrent (AExpr.lit Is) (AExpr.lit Vt) v]
+/-- Shockley diode: `i = Is·(exp(v/Vt) − 1)`. The `v/Vt` argument to `exp` is
+forced to be dimensionless by the types; the underlying expression coincides with
+the polymorphic `diodeCurrent` the proofs library verifies over `ℝ`. -/
+def diode (Is : Ampere) (Vt : Volt) : TwoPin .electrical :=
+  twoPinV fun v i => [i ≡ Is * (DimExpr.exp (v / Vt) - 1)]
+
+/-- Escape hatch: an independent voltage source with an arbitrary (untyped)
+time-dependent waveform `v = e(time)`, for shapes the typed builders don't cover. -/
+def vsource (e : AExpr → AExpr) : TwoPin .electrical := twoPin fun v _i => [v ≡ e .time]
 
 end Sparkle.Analog

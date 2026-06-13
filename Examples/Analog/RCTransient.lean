@@ -14,9 +14,9 @@ namespace Examples.Analog.RCTransient
 /-- RC low-pass driven by a 5 V step. `R = 1 kΩ`, `C = 1 µF` ⇒ `τ = RC = 1 ms`.
 Net 2 is the capacitor voltage. -/
 def rc : Circuit := circuit fun n1 n2 =>
-  [ vsourceDC 5.0 |>.between n1 ground
-  , resistor 1e3  |>.between n1 n2
-  , capacitor 1e-6 |>.between n2 ground ]
+  [ vsourceDC (volts 5.0)   |>.between n1 ground
+  , resistor  (ohms 1e3)    |>.between n1 n2
+  , capacitor (farads 1e-6) |>.between n2 ground ]
 
 /-- Closed-form capacitor voltage for the 5 V step (τ = 1 ms). -/
 def analytic (t : Float) : Float := 5.0 * (1.0 - Float.exp (-t / 1e-3))
