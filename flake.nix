@@ -15,6 +15,26 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
     in
     {
+      # The CDC runner is standalone C++20 (std::thread / std::atomic) that
+      # `JIT.runCDC` dlopen()s at runtime. It is built hermetically here rather
+      # than linked, because static-linking it as a Lake extern_lib injects it
+      # into the compile-time dynlib set and breaks `precompileModules`. The
+      # `-march=native` from c_src/cdc/Makefile is dropped for reproducibility.
+      packages = forAllSystems (pkgs: {
+        cdc-runner = pkgs.stdenv.mkDerivation {
+          pname = "sparkle-cdc-runner";
+          version = "0.1.0";
+          src = ./c_src/cdc;
+          buildPhase = ''
+            $CXX -std=c++20 -O3 -pthread -shared -fPIC -o cdc_runner.so cdc_runner.cpp
+          '';
+          installPhase = ''
+            mkdir -p $out/lib
+            cp cdc_runner.so $out/lib/
+          '';
+        };
+      });
+
       # Reproducibility boundary: everything below is pinned by flake.lock.
       # Lean itself is *not* — `elan` reads `lean-toolchain` and fetches v4.28.0
       # at runtime, and `lake` fetches the deps pinned in `lake-manifest.json`.
@@ -22,6 +42,12 @@
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           name = "sparkle-dev-shell";
+
+          # Deterministic, declarative discovery of the CDC runner: the FFI's
+          # ensure_cdc_runner() (c_src/sparkle_jit.c) dlopen()s this path first.
+          # Set as an env attribute (not a shellHook) so every shell entry is
+          # identical and has no filesystem side effects.
+          SPARKLE_CDC_RUNNER_SO = "${self.packages.${pkgs.stdenv.hostPlatform.system}.cdc-runner}/lib/cdc_runner.so";
 
           buildInputs = with pkgs; [
             # Lean toolchain manager. Resolves the `lean-toolchain` pin (v4.28.0)
