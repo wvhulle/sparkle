@@ -83,6 +83,7 @@ def capacitance : Dimension := { mass := -1, length := -2, time := 4, current :=
 def inductance : Dimension := { mass := 1, length := 2, time := -2, current := -2 }
 def power : Dimension := { mass := 1, length := 2, time := -3 }   -- watt
 def energy : Dimension := { mass := 1, length := 2, time := -2 }  -- joule
+def frequency : Dimension := { time := -1 }                       -- hertz
 
 end Dim
 
@@ -124,14 +125,20 @@ abbrev Henry := Quantity Dim.inductance
 abbrev Coulomb := Quantity Dim.charge
 abbrev Second := Quantity Dim.time
 abbrev Watt := Quantity Dim.power
+abbrev Hertz := Quantity Dim.frequency
+/-- A dimensionless ratio — e.g. a voltage gain `V/V` or current gain `A/A`. -/
+abbrev Gain := Quantity Dim.dimensionless
 
 def volts (x : Float) : Volt := ⟨x⟩
 def amperes (x : Float) : Ampere := ⟨x⟩
 def ohms (x : Float) : Ohm := ⟨x⟩
+def siemens (x : Float) : Siemens := ⟨x⟩
 def farads (x : Float) : Farad := ⟨x⟩
 def henries (x : Float) : Henry := ⟨x⟩
 def coulombs (x : Float) : Coulomb := ⟨x⟩
 def seconds (x : Float) : Second := ⟨x⟩
+def hertz (x : Float) : Hertz := ⟨x⟩
+def gain (x : Float) : Gain := ⟨x⟩
 
 /-! ## Demonstrations (checked at compile time)
 

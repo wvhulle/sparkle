@@ -89,6 +89,8 @@ import Tests.SVParser.TestVerilogCoSim
 import Tests.SVParser.TestVerify
 import Tests.Bus.TestAXI4Lite
 import Tests.RoundTrip.IRVerilogIR
+import Tests.Analog.TransientTest
+import Tests.Analog.ACTest
 import LSpec
 
 open Sparkle.Core.Domain
@@ -521,5 +523,11 @@ def main : IO UInt32 := do
   let axi4Tests ← Sparkle.Tests.Bus.AXI4Lite.allTests
   let axi4FullTests ← Sparkle.Tests.Bus.AXI4Lite.fullModuleTests
   let allTests := allTests ++ axi4Tests ++ axi4FullTests
+
+  -- Analog (continuous-time) tests: RC/RLC transient vs closed form, and AC
+  -- small-signal transfer functions + op-amp / controlled-source gains.
+  IO.println ""
+  IO.println "--- Analog Simulation Tests ---"
+  let allTests := allTests ++ Tests.Analog.tests ++ Tests.Analog.AC.tests
 
   lspecIO (Std.HashMap.ofList [("all", [allTests])]) []

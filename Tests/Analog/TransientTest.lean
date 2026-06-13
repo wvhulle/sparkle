@@ -68,6 +68,3 @@ def tests : TestSeq :=
       (approx (((rlc.transient 1e-6 3000).back?.map (·.2[5]!)).getD 0.0) 0.0 1e-3)
 
 end Tests.Analog
-
-def main : IO UInt32 :=
-  lspecIO (Std.HashMap.ofList [("analog", [Tests.Analog.tests])]) []

@@ -78,6 +78,6 @@ branch voltage is a `Volt`-typed expression and the branch current an
 `Ampere`-typed one, so the law's dimensions are verified at compile time. -/
 def twoPinV (law : DimExpr Dim.voltage → DimExpr Dim.current → List Equation) :
     TwoPin .electrical :=
-  ⟨fun v i => law ⟨v⟩ ⟨i⟩⟩
+  { law := fun v i => law ⟨v⟩ ⟨i⟩ }
 
 end Sparkle.Analog
