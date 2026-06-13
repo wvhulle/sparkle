@@ -9,6 +9,8 @@ import Sparkle.Analog.Solver.LinAlg
 import Sparkle.Analog.Solver.MNA
 import Sparkle.Analog.Solver.Transient
 import Sparkle.Analog.Solver.AC
+import Sparkle.Analog.Units
+import Sparkle.Analog.DimExpr
 
 /-!
 # Sparkle.Analog — continuous-time analog modelling

@@ -15,6 +15,12 @@
 
 #include <lean/lean.h>
 
+/* `leanc` builds with `-fvisibility=hidden` and `LEAN_EXPORT` is a no-op outside
+   libleanshared, so these @[extern] symbols would be hidden. `precompileModules`
+   loads this as a *shared* library at compile time and must resolve them
+   dynamically — force default visibility (overrides the leanc flag). */
+#pragma GCC visibility push(default)
+
 /* Declare dlopen/dlsym/dlclose/dlerror manually to avoid dlfcn.h
    (Lean's bundled clang uses -nostdinc which excludes system headers) */
 #define RTLD_NOW 2
@@ -26,6 +32,7 @@ extern char* dlerror(void);
 extern void* calloc(unsigned long count, unsigned long size);
 extern void  free(void* ptr);
 extern int   snprintf(char* buf, unsigned long size, const char* fmt, ...);
+extern char* getenv(const char* name);
 
 typedef struct {
     void* lib;              /* dlopen handle */
@@ -376,19 +383,29 @@ static cdc_run_fn g_cdc_run = NULL;
 static int ensure_cdc_runner(void) {
     if (g_cdc_run) return 1;
 
-    /* Try platform-specific names */
-    const char* names[] = {
-        "./cdc_runner.so",
-        "./c_src/cdc/cdc_runner.so",
-        "cdc_runner.so",
-        "./cdc_runner.dylib",
-        "./c_src/cdc/cdc_runner.dylib",
-        "cdc_runner.dylib",
-        NULL
-    };
-    for (int i = 0; names[i]; i++) {
-        g_cdc_runner_lib = dlopen(names[i], RTLD_NOW);
-        if (g_cdc_runner_lib) break;
+    /* Prefer an explicit absolute path from the environment.  The Nix devShell
+       sets SPARKLE_CDC_RUNNER_SO to the hermetic `cdc-runner` package output,
+       giving a deterministic, side-effect-free location.  Fall back to the
+       in-tree paths produced by `make -C c_src/cdc` for non-Nix builds. */
+    const char* env = getenv("SPARKLE_CDC_RUNNER_SO");
+    if (env && env[0]) {
+        g_cdc_runner_lib = dlopen(env, RTLD_NOW);
+    }
+
+    if (!g_cdc_runner_lib) {
+        const char* names[] = {
+            "./cdc_runner.so",
+            "./c_src/cdc/cdc_runner.so",
+            "cdc_runner.so",
+            "./cdc_runner.dylib",
+            "./c_src/cdc/cdc_runner.dylib",
+            "cdc_runner.dylib",
+            NULL
+        };
+        for (int i = 0; names[i]; i++) {
+            g_cdc_runner_lib = dlopen(names[i], RTLD_NOW);
+            if (g_cdc_runner_lib) break;
+        }
     }
     if (!g_cdc_runner_lib) return 0;
 
@@ -475,3 +492,5 @@ LEAN_EXPORT lean_obj_res sparkle_jit_run_cdc(
 
     return mk_io_ok(outer);
 }
+
+#pragma GCC visibility pop

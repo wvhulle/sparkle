@@ -1,5 +1,8 @@
 import Sparkle.Analog.Proofs.Diode
 import Sparkle.Analog.Proofs.RC
+import Sparkle.Analog.Proofs.Dimension
+import Sparkle.Analog.Proofs.TransferFunction
+import Sparkle.Analog.Proofs.OpAmp
 
 /-!
 # Sparkle.Analog.Proofs — verified analog model properties

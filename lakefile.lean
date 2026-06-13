@@ -119,10 +119,8 @@ lean_lib «Sparkle.Analog» where
 lean_lib «Sparkle.Analog.Proofs» where
   roots := #[`Sparkle.Analog.Proofs]
 
--- Phase-1 exit criterion: RC/RLC transient vs closed-form.
-lean_exe «analog-transient-test» where
-  root := `Tests.Analog.TransientTest
-  supportInterpreter := true
+-- Analog tests (RC/RLC transient + AC small-signal / op-amp gain) run through the
+-- `lake test` driver (`Tests.AllTests`), not standalone exes.
 
 -- Runnable analog demos (build + run with `lake exe analog-example`).
 lean_lib «Examples.Analog» where
